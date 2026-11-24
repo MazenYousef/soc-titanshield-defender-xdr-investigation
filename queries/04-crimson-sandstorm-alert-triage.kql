@@ -1,0 +1,32 @@
+// Case 2 - Crimson Sandstorm: triage a "low-fidelity" whoami EDR alert
+
+// Alert user -> host
+Employees
+| where username == "chtaylor"
+| project name, role, hostname, ip_addr
+
+// The alerting command
+ProcessEvents
+| where hostname == "IL5M-DESKTOP"
+| where process_commandline has "whoami"
+| project timestamp, process_commandline
+
+// Pivot on the command STYLE, not the single command: echo ... >> Logs.txt
+ProcessEvents
+| where hostname == "IL5M-DESKTOP"
+| where process_commandline has_all ("echo", ">>", "logs.txt")
+| project timestamp, process_commandline
+| order by timestamp asc
+
+// Is it just this user? Broaden to the whole company
+ProcessEvents
+| where process_commandline has_all ("echo", ">>", "logs.txt")
+| summarize hits = count(), hosts = dcount(hostname)
+
+// Which roles run it? (14 Network Engineers + 1 Senior Network Engineer)
+let hosts = ProcessEvents
+| where process_commandline has_all ("echo", ">>", "logs.txt")
+| distinct hostname;
+Employees
+| where hostname in (hosts)
+| summarize count() by role

@@ -1,0 +1,25 @@
+// Case 2 - Crimson Sandstorm: find patient zero's root cause
+
+// Timeline on the first host: what ran right before the first Logs.txt command?
+ProcessEvents
+| where hostname == "IL5M-DESKTOP"
+| where timestamp between (datetime(2024-07-17 10:00:00) .. datetime(2024-07-17 10:48:00))
+| project timestamp, parent_process_name, process_commandline
+| order by timestamp asc
+
+// The lure file: hash and the process that created it (Edge = downloaded)
+FileCreationEvents
+| where hostname == "IL5M-DESKTOP"
+| where filename == "New_Diet_Plan_For_My_Love.xlsx"
+| project timestamp, filename, path, sha256, process_name
+
+// Where was it downloaded from?
+OutboundNetworkEvents
+| where src_ip == "10.10.0.79"
+| where url has "New_Diet_Plan_For_My_Love.xlsx"
+| project timestamp, url
+
+// Was the link delivered by email?
+Email
+| where link has "New_Diet_Plan_For_My_Love.xlsx"
+| project timestamp, sender, recipient, subject

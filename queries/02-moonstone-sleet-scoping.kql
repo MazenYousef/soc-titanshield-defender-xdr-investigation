@@ -1,0 +1,42 @@
+// Case 1 - Moonstone Sleet: scope the campaign and find patient zero
+
+// Same game on other hosts? (6 hosts; first: Y4GN-DESKTOP, 2024-07-05)
+FileCreationEvents
+| where filename contains "DeTankWar"
+| project timestamp, hostname, username, path, sha256
+| order by timestamp asc
+
+// Patient zero: Ethan Johnson (10.10.0.19). Did he click a link?
+OutboundNetworkEvents
+| where src_ip == "10.10.0.19"
+| where url contains "DeTankWar"
+
+// Where did the link come from?
+Email
+| where recipient == "ethan_johnson@titanshield.com"
+| where link contains "detankwar"
+
+// Every recipient of the same lure
+Email
+| where link contains "detankwar"
+| project timestamp, sender, recipient, subject
+| order by timestamp asc
+
+// Who was targeted, by role? (5 Defense Engineers + 1 Lead Defense Engineer)
+let targets = Email
+| where link contains "detankwar"
+| distinct recipient;
+Employees
+| where email_addr in (targets)
+| summarize count() by role
+
+// Second-stage malicious DLLs named in the Microsoft TI article
+FileCreationEvents
+| where filename in~ ("nvunityplugin.dll", "unityplayer.dll")
+| project timestamp, hostname, username, filename, sha256
+| order by timestamp asc
+
+// C2 domains from the TI article, hunted in command lines
+ProcessEvents
+| where process_commandline has "curl" and process_commandline has_any ("mingeloem.com", "matrixane.com")
+| project timestamp, hostname, process_commandline

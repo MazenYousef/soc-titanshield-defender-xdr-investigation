@@ -1,0 +1,31 @@
+// Case 1 - Moonstone Sleet: from the reporting user to the delivery infrastructure
+// Tables: Employees, FileCreationEvents, OutboundNetworkEvents, PassiveDns, InboundNetworkEvents
+// Enrichment: Microsoft Defender XDR Threat Intelligence
+
+// Who is the reporting user? (Lead Defense Engineer, UB9I-DESKTOP, 10.10.0.10)
+Employees
+| where name == "James Douglas"
+
+// Find the game on his device (2024-07-09 14:59:23, Downloads folder)
+FileCreationEvents
+| where hostname == "UB9I-DESKTOP"
+| where filename contains "DeTankWar"
+
+// Next (outside KQL): search the SHA256 in Defender XDR Intel Explorer
+//   -> score 100, attributed to Moonstone Sleet (North Korea)
+
+// Where did the file come from? His browsing history
+OutboundNetworkEvents
+| where src_ip == "10.10.0.10"
+| where url contains "DeTankWar"
+
+// Which IPs host the download domain?  -> 45.61.133.15
+PassiveDns
+| where domain contains "detankwar.com"
+| distinct ip
+
+// Did that IP look at us before the attack? (reconnaissance)
+InboundNetworkEvents
+| where src_ip == "45.61.133.15"
+| project timestamp, method, url
+| order by timestamp asc

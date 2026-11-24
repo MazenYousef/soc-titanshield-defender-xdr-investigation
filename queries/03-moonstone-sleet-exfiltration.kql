@@ -1,0 +1,18 @@
+// Case 1 - Moonstone Sleet: reconstruct collection -> staging -> exfiltration (work backwards)
+
+// Exfiltration: TopSecret.zip uploaded over FTP to the C2 domain
+ProcessEvents
+| where process_commandline has "TopSecret.zip"
+| project timestamp, hostname, process_commandline
+| order by timestamp asc
+
+// Staging: what was compressed into the archive?
+ProcessEvents
+| where process_commandline has "Compress-Archive"
+| project timestamp, hostname, process_commandline
+
+// Collection: what was copied into the staging folder? (Project Omega file share)
+ProcessEvents
+| where process_commandline has "StagingArea"
+| project timestamp, hostname, process_commandline
+| order by timestamp asc

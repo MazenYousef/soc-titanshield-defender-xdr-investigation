@@ -1,0 +1,35 @@
+// Detection rules derived from both cases
+
+// 1. Discovery output written to a temp log file (Crimson Sandstorm tradecraft)
+ProcessEvents
+| where process_commandline has_all ("echo", ">>")
+| where process_commandline has_any ("whoami", "wmic", "ipconfig", "systeminfo", "ping")
+| where process_commandline has @"%temp%"
+
+// 2. Office documents downloaded by the browser and opened, followed by macro files
+FileCreationEvents
+| where process_name in~ ("Edge.exe", "chrome.exe", "firefox.exe")
+| where filename endswith ".xlsx" or filename endswith ".xlsm" or filename endswith ".docm"
+
+// 3. Command-line upload tools sending files out (curl -T / ftp://)
+ProcessEvents
+| where process_commandline has "curl" and process_commandline has_any ("-T ", "ftp://", "--upload-file")
+
+// 4. Archive staging of file-share content (Copy-Item from UNC path + Compress-Archive)
+ProcessEvents
+| where process_commandline has_any ("Copy-Item", "Compress-Archive")
+| where process_commandline has @"\\"
+
+// 5. Known-bad hashes and domains from threat intel (keep this list fed from Defender TI)
+let bad_hashes = dynamic(["56554117d96d12bd3504ebef2a8f28e790dd1fe583c33ad58ccbf614313ead8c",
+                          "09d152aa2b6261e3b0a1d1c19fa8032f215932186829cfcca954cc5e84a6cc38",
+                          "6aeef036eb85a470dbd6d039250172a510a8627b873e8b3b79fae5a7dd767e73"]);
+FileCreationEvents
+| where sha256 in (bad_hashes)
+
+// 6. Corporate users emailing personal webmail accounts that never appeared before
+let internal = Employees | project email_addr;
+Email
+| where sender in (internal)
+| where recipient endswith "@gmail.com"
+| summarize first_seen = min(timestamp), messages = count() by sender, recipient

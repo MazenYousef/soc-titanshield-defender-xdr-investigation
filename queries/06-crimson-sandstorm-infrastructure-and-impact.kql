@@ -1,0 +1,51 @@
+// Case 2 - Crimson Sandstorm: actor infrastructure, reconnaissance and impact
+
+// Everything the "romance" sender sent, and the domains in the links
+Email
+| where sender == "marcella_flores@gmail.com"
+| extend domain = tostring(parse_url(link).Host)
+| project timestamp, recipient, subject, domain
+| order by timestamp asc
+
+Email
+| where sender == "marcella_flores@gmail.com"
+| extend domain = tostring(parse_url(link).Host)
+| distinct domain
+
+// Expand infrastructure: which IPs did the actor's domains resolve to?
+let actor_domains = Email
+| where sender == "marcella_flores@gmail.com"
+| extend domain = tostring(parse_url(link).Host)
+| distinct domain;
+PassiveDns
+| where domain in (actor_domains)
+| distinct ip
+
+// Pre-attack reconnaissance against the company from those IPs
+let actor_domains = Email
+| where sender == "marcella_flores@gmail.com"
+| extend domain = tostring(parse_url(link).Host)
+| distinct domain;
+let actor_ips = PassiveDns | where domain in (actor_domains) | distinct ip;
+InboundNetworkEvents
+| where src_ip in (actor_ips)
+| project timestamp, src_ip, method, url
+| order by timestamp asc
+
+// Exfiltration to the attacker's mailbox ("Data Exfiltration PART 1 of Logs.zip")
+Email
+| where recipient == "exfilbucket93@gmail.com"
+| project timestamp, sender, subject
+
+// Pivot back from the actor IPs to any further domains on the same infrastructure
+PassiveDns
+| where ip in ("208.199.30.154", "202.241.233.180")
+| distinct domain
+
+// The victim's own browsing around the incident
+OutboundNetworkEvents
+| where src_ip == "10.10.0.8"
+| where url contains "google"
+| where url contains "search"
+| project timestamp, url
+| order by timestamp asc
