@@ -7,7 +7,7 @@ Threat-intelligence-driven SOC investigation at a fictional defence contractor, 
 1. **Moonstone Sleet (North Korea).** Reconnaissance of TitanShield's engineers, then a fake "NFT game investment" email with a trojanized tank game, ending in the theft of the top-secret **Project Omega**.
 2. **Crimson Sandstorm (Iran).** Found by **not dismissing a "low-fidelity" EDR alert**. A months-long romance lure led to a macro, discovery commands on 15 network engineers' machines, and the collected data emailed out to an attacker mailbox.
 
-> **Platform:** KC7 Cyber, module *Titan Shield: A showcase of Microsoft Defender XDR* · **Status:** completed, 65/65 questions, 4,000 points
+> **Platform:** KC7 Cyber, module *Titan Shield: A showcase of Microsoft Defender XDR* · 
 > **Tools:** Microsoft Defender XDR Threat Intelligence · Azure Data Explorer (Kusto) · KQL · MITRE ATT&CK
 
 ---
@@ -317,6 +317,6 @@ A KQL and threat-intel quick reference is in [`docs/kql-and-ti-cheatsheet.md`](d
 
 ---
 
-*Scenario, data and story by [KC7 Cyber](https://kc7cyber.com) (sponsored by Microsoft); module authors Greg Schloemer and Simeon Kakpovi. Threat-actor names follow Microsoft's naming. Investigation notes, queries and write-up by Mazen Yousef.*
+*Scenario, data and story by [KC7 Cyber](https://kc7cyber.com) (sponsored by Microsoft)*
 
 *Author: Mazen Yousef | [LinkedIn](https://linkedin.com/in/mazenyousef) | [TryHackMe](https://tryhackme.com/p/mazen.yousef)*
